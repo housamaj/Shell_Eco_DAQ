@@ -1,0 +1,33 @@
+// Define constants and variables
+const int hallSensorPin = 2; // Pin connected to the Hall effect sensor
+volatile unsigned long lastTime = 0;
+volatile unsigned long currentTime;
+volatile unsigned int pulseCount = 0;
+
+void setup() {
+  Serial.begin(9600);            // Initialize serial communication
+  pinMode(hallSensorPin, INPUT);  // Set the sensor pin as input
+  attachInterrupt(digitalPinToInterrupt(hallSensorPin), countPulses, RISING); // Attach interrupt on rising edge
+}
+
+void loop() {
+  noInterrupts();          // Disable interrupts while we calculate
+  unsigned int count = pulseCount;  // Copy the pulse count to a local variable
+  pulseCount = 0;          // Reset the pulse count for the next period
+  interrupts();            // Re-enable interrupts
+
+  // Calculate the RPM
+  float timeElapsed = (millis() - lastTime) / 1000.0; // Time in seconds
+  lastTime = millis();
+  float rpm = (count / timeElapsed) * 60;  // Convert to RPM (60 seconds per minute)
+
+  Serial.print("RPM: ");
+  Serial.println(rpm);
+
+  delay(1000); // Update RPM every second
+}
+
+// ISR to count pulses
+void countPulses() {
+  pulseCount++;
+}
